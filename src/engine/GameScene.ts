@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { generateIsland, TileType } from '../world/generator';
 import HUD from '../ui/HUD';
+import Inventory from '../ui/Inventory';
 
 const TILE_SIZE = 24;
 const MAP_W = 80; // tiles
@@ -16,6 +17,8 @@ export default class GameScene extends Phaser.Scene {
   oxygen = 100;
   inventory: Record<string, number> = {};
   seed = 42;
+  inventoryUI!: Inventory;
+  keyI!: Phaser.Input.Keyboard.Key;
 
   constructor() {
     super({ key: 'GameScene' });
@@ -33,6 +36,7 @@ export default class GameScene extends Phaser.Scene {
   create() {
     this.cameras.main.setBackgroundColor('#87CEEB');
     this.cursors = this.input.keyboard.createCursorKeys();
+    this.keyI = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.I);
 
     // Generate world
     this.tiles = generateIsland(MAP_W, MAP_H, this.seed);
@@ -83,11 +87,13 @@ export default class GameScene extends Phaser.Scene {
     this.hud = new HUD(this, { x: 10, y: 10 });
     this.hud.updateStats({ health: 100, oxygen: this.oxygen, inventory: this.inventory });
 
+    // Inventory UI
+    this.inventoryUI = new Inventory(this, { x: 10, y: 10 });
+
     // Spawn a few resource nodes (simple)
     this.spawnResources(12);
 
-    // Overlap for pickups
-    this.physics.add.overlap(this.player, this.physics.world.getChildren().filter(c => (c as any).isResource), this.onPickup as any, undefined, this);
+    // Overlap for pickups will be added when creating resources
   }
 
   update(time: number, delta: number) {
@@ -97,7 +103,7 @@ export default class GameScene extends Phaser.Scene {
     const onWater = this.isInWater(this.player.x, this.player.y + this.player.height / 2);
     if (onWater) {
       // swimming controls
-      this.player.body.setGravityY(0);
+      (this.player.body as Phaser.Physics.Arcade.Body).setGravityY(0);
       if (this.cursors.up?.isDown) {
         this.player.setVelocityY(-swimSpeed);
       }
@@ -117,7 +123,7 @@ export default class GameScene extends Phaser.Scene {
       if (this.oxygen < 0) this.oxygen = 0;
 
     } else {
-      this.player.body.setGravityY(800);
+      (this.player.body as Phaser.Physics.Arcade.Body).setGravityY(800);
       if (this.cursors.left?.isDown) {
         this.player.setVelocityX(-speed);
       } else if (this.cursors.right?.isDown) {
@@ -134,6 +140,11 @@ export default class GameScene extends Phaser.Scene {
     }
 
     this.hud.updateStats({ health: 100, oxygen: Math.round(this.oxygen), inventory: this.inventory });
+
+    // toggle inventory
+    if (Phaser.Input.Keyboard.JustDown(this.keyI)) {
+      this.inventoryUI.toggle();
+    }
   }
 
   findSpawnPoint() {
@@ -165,7 +176,7 @@ export default class GameScene extends Phaser.Scene {
         const ry = y * TILE_SIZE + TILE_SIZE / 2 - 8;
         const g = this.add.graphics();
         g.fillStyle(0x8B4513, 1);
-        g.fillCircle(0, 0, 6);
+        g.fillCircle(6, 6, 6);
         g.generateTexture(`res_${i}`, 12, 12);
         g.destroy();
         const sprite = this.physics.add.sprite(rx, ry, `res_${i}`);
@@ -180,6 +191,7 @@ export default class GameScene extends Phaser.Scene {
   onPickup(player: any, resource: any) {
     const type = resource.resourceType || 'unknown';
     this.inventory[type] = (this.inventory[type] || 0) + 1;
+    this.inventoryUI.addItem(type, 1);
     resource.destroy();
   }
 }
