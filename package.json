@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc --noEmit && vite build",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -13,8 +13,7 @@
     "@types/node": "^22.10.1",
     "typescript": "^5.6.3",
     "vite": "^5.4.10",
-    "vitest": "^2.1.8",
-    "@types/phaser": "^3.55.4"
+    "vitest": "^2.1.8"
   },
   "dependencies": {
     "phaser": "^3.85.2"

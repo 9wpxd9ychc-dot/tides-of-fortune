@@ -1,16 +1,16 @@
-import GameScene from '../engine/GameScene';
+import Phaser from 'phaser';
 
 type HUDStats = { health: number; oxygen: number; inventory: Record<string, number> };
 
 export default class HUD {
-  scene: GameScene;
+  scene: Phaser.Scene;
   x: number;
   y: number;
   healthText!: Phaser.GameObjects.Text;
   oxygenText!: Phaser.GameObjects.Text;
   inventoryText!: Phaser.GameObjects.Text;
 
-  constructor(scene: GameScene, pos: { x: number; y: number }) {
+  constructor(scene: Phaser.Scene, pos: { x: number; y: number }) {
     this.scene = scene;
     this.x = pos.x;
     this.y = pos.y;
